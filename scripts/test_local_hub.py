@@ -1,30 +1,54 @@
 import os
 import sys
 import json
-import jsc #convert from js
+import paramiko
 
 
-def get_creds(file):
-	
+"""
+	Copies the credentials.json file locally from robot
+"""
+def get_credentials(hostname, username, password, src_path, dst_path):
+	ssh_client = paramiko.SSHClient()
+	ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+	ssh_client.connect(hostname=hostname, username=username, password=password)
+
+	ftp_client = ssh_client.open_sftp()
+	ftp_client.get(src_path, dst_path)
+	ftp_client.close()
 
 
-def create_token(credential_path):
-	# read credentials from file
-	with open(credential_path, 'r') as file:
-		json_data = json.load(file)
+"""
+	Reads and returns contents of JSON file
+"""
+def load_json(path, mode):
+	with open(path, mode) as file:
+		data = json.load(file)
+	return data
 
+
+"""
+	Creates AWS session token
+"""
+def create_token():
+
+	# get login info for SSH to robot
+	login_file = os.path.expanduser('~/jibo/Hub-Test/config/login.json')
+	login_data = load_json(login_file, 'r')
+	username = login_data['username']
+	password = login_data['password']
+	robot_name = login_data['robot_name']
+
+	# generate credentials.json
+	src_path = '/var/jibo/credentials.json'
+	dst_path = os.path.expanduser('~/jibo/Hub-Test/config/credentials.json')
+	get_credentials(robot_name, username, password, src_path, dst_path)
+
+	# Get credentials for AWS token
+	json_data = load_json(dst_path, 'r')
 	region = json_data['region']
 	endpoint = 'https://{}.jibo.com'.format(region)
-	creds = get_creds(credential_path)
-
-	account = {
-				'credentials': creds,
-				'region': region,
-				'endpoint': endpoint
-			}
-
-	token = jsc.Account(account).createAccessToken()
-
+	accessKeyId = json_data['accessKeyId']
+	secretAccessKey = json_data['secretAccessKey']
 
 
 if __name__ == "__main__":
