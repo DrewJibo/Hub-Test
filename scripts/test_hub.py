@@ -46,41 +46,25 @@ def get_signature_key(key, date_stamp, region_name, service_name):
 
 
 """
-	Combines the AWS elements to build a cononical request
-"""
-def build_req(elements):
-	
-	return req
-
-
-"""
-	Builds the canonical request for AWS
-"""
-def create_canonical_request(method, request_parameters):
-	# AWS elements
-	uri = '/'														# create canonical URI (from domain to query), use '/' if no path
-	query = request_parameters										# must be sorted by name
-	headers = 'host:{}\nx-amz-date:{}\n'.format(host, amz_date)		# must be trimmed, lowercase, sorted in code point (low to high)
-	signed_headers = 'host;x-amz-date'								# lists headers in canonical_headers list, delimited with ; in alpha order
-	payload_hash = hashlib.sha256('').hexdigest()					# hash of the request body content, GET payload is empty string
-	
-	# combine elements to make canonical request
-	request = '{}\n{}\n{}\n{}\n{}\n{}'.format(method, uri, query, headers, signed_headers, payload_hash)
-	return request
-
-
-"""
 	Creates AWS session token
 """
 def create_token():
-	# get login info for SSH to robot
+
+	####################
+	#    LOGIN DATA    #
+	####################
+
 	login_file = os.path.expanduser('~/jibo/Hub-Test/config/login.json')
 	login_data = load_json(login_file)
 	username = login_data['username']
 	password = login_data['password']
 	robot_name = login_data['robot_name']
 
-	# generate credentials.json
+
+	##############################
+	#    GENERATE CREDENTIALS    #
+	##############################
+
 	src_path = '/var/jibo/credentials.json'
 	dst_path = os.path.expanduser('~/jibo/Hub-Test/config/credentials.json')
 
@@ -96,10 +80,15 @@ def create_token():
 	access_key = json_data['accessKeyId']
 	secret_key = json_data['secretAccessKey']
 
+
+	##########################
+	#    AWS REQUEST INFO    #
+	##########################
+
 	method = 'GET'
 	service = 'ec2'
 	host = 'ec2.amazonaws.com'
-	region = 'us-east-1'
+	aws_region = 'us-east-1'
 	aws_endpoint = 'https://ec2.amazonaws.com'
 	request_parameters = ''
 
@@ -113,15 +102,64 @@ def create_token():
 	date_stamp = time.strftime('%Y%m%d')			# date w/o time, used in credential scope
 
 
-	###########################
-	#    Canonical Request    #
-	###########################
+	##################################
+	#    CREATE CANONICAL REQUEST    #
+	##################################
 
-	canonical_request = create_canonical_request(method, request_parameters)
+	uri = '/'																# create canonical URI (from domain to query), use '/' if no path
+	query = request_parameters												# must be sorted by name
+	canonical_headers = 'host:{}\nx-amz-date:{}\n'.format(host, amz_date)	# must be trimmed, lowercase, sorted in code point (low to high)
+	signed_headers = 'host;x-amz-date'										# lists headers in canonical_headers list, delimited with ; in alpha order
+	payload_hash = hashlib.sha256('').hexdigest()							# hash of the request body content, GET payload is empty string
 
-	
-	
+	# Combine elements to make request
+	canonical_request = '{}\n{}\n{}\n{}\n{}\n{}'.format(method, uri, query, canonical_headers, signed_headers, payload_hash)
 
+
+	###################################
+	#    CREATE THE STRING TO SIGN    #
+	###################################
+
+	algorithm = 'AWS4-HMAC-SHA256'
+	credential_scope = '{}/{}/{}/aws4_request'.format(date_stamp, aws_region, service)
+	hashed_req = hashlib.sha256(canonical_request).hexdigest()
+
+	# Combine elements to make string
+	string_to_sign = '{}\n{}\n{}\n{}'.format(algorithm, amz_date, credential_scope, hashed_req)
+
+
+	#############################
+	#    CALCULATE SIGNATURE    #
+	#############################
+
+	signing_key = get_signature_key(secret_key, date_stamp, aws_region, service)
+	encoded_string = string_to_sign.encode('utf-8')
+
+	# create the signature
+	signature = hmac.new(signing_key, encoded_string, hashlib.sha256).hexdigest()
+
+
+	##########################
+	#    ADD SIGNING INFO    #
+	##########################
+
+	authorization_header = '{} Credential={}/{}, SignedHeaders={}, Signature={}'.format(algorithm, access_key, credential_scope, signed_headers, signature)
+	headers = {'x-amz-date':amz_date, 'Authorization':authorization_header}
+
+
+	######################
+	#    SEND REQUEST    #
+	######################
+
+	request_url = '{}?{}'.format(aws_endpoint, query)
+
+	print('\n****** BEGIN REQUEST ******')
+	print('Request URL = ' + request_url)
+	response = requests.get(request_url, headers=headers)
+
+	print('\n****** RESPONSE ******')
+	print('Response code: %d\n' % response.status_code)
+	print(response.text)
 
 
 if __name__ == "__main__":
