@@ -13,6 +13,7 @@ def setup_pegasus(branch):
 	# commands
 	clone = 'git clone https://github.com/jiboV2/pegasus.git'
 	checkout = 'git checkout ' + branch
+	pull = 'git pull origin ' + branch 
 	docker = './scripts/docker-init.sh'
 
 	# check if user already has pegasus
@@ -27,6 +28,7 @@ def setup_pegasus(branch):
 	# build pegasus
 	os.chdir(path_pegasus)
 	os.system(checkout)
+	os.system(pull)
 	os.system(docker)
 
 
@@ -39,7 +41,7 @@ def setup_sdk(branch):
 	path_cli = os.path.expanduser(path_sdk + '/sdk/packages/jibo-cli')
 
 	# commands
-	clone_sdk = 'git clone git@github.jibo.com:sdk/sdk.git'
+	clone = 'git clone git@github.jibo.com:sdk/sdk.git'
 	checkout = 'git checkout ' + branch
 	pull = 'git pull origin ' + branch
 	bootstrap = 'yarn bootstrap'
@@ -51,7 +53,7 @@ def setup_sdk(branch):
 		print("Setting up sdk directories...")
 		os.makedirs(path_sdk)
 		os.chdir(path_sdk)
-		os.system(clone_sdk)
+		os.system(clone)
 	else:
 		print("SDK found!")
 
@@ -67,16 +69,11 @@ def setup_sdk(branch):
 
 
 def main():
-	pegasus_branch = raw_input("Enter branch for Pegasus repo: ") or 'master'
-	sdk_branch = raw_input("Enter branch for SDK monorepo: ") or 'pegasus'
+	pegasus_branch = input("Enter branch for Pegasus repo: ") or 'master'
+	sdk_branch = input("Enter branch for SDK monorepo: ") or 'pegasus'
 
-	print(pegasus_branch)
-	print(sdk_branch)
-
-	"""
 	setup_pegasus(pegasus_branch)
 	setup_sdk(sdk_branch)
-	"""
 
 if __name__ == "__main__":
 	main()
