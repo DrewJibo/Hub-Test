@@ -56,6 +56,7 @@ def create_token():
 
 	login_file = os.path.expanduser('~/jibo/Hub-Test/config/login.json')
 	login_data = load_json(login_file)
+
 	username = login_data['username']
 	password = login_data['password']
 	robot_name = login_data['robot_name']
@@ -74,27 +75,36 @@ def create_token():
 		print("Done.\n")
 
 	# Get credentials for AWS token
-	json_data = load_json(dst_path)
-	region = json_data['region']
+	credentials = load_json(dst_path)
+	region = credentials['region']
 	endpoint = 'https://{}.jibo.com'.format(region)
-	access_key = json_data['accessKeyId']
-	secret_key = json_data['secretAccessKey']
+	access_key = credentials['accessKeyId']
+	secret_key = credentials['secretAccessKey']
+
+	if access_key is None or secret_key is None:
+		print("\nNo access key is available.\n")
+		sys.exit()
 
 
 	##########################
 	#    AWS REQUEST INFO    #
 	##########################
 
-	method = 'GET'
-	service = 'ec2'
-	host = 'ec2.amazonaws.com'
-	aws_region = 'us-east-1'
-	aws_endpoint = 'https://ec2.amazonaws.com'
-	request_parameters = ''
+	config_path = os.path.expanduser('~/jibo/Hub-Test/config/aws_config.json')
 
-	if access_key is None or secret_key is None:
-		print("\nNo access key is available.\n")
-		sys.exit()
+	if not os.path.exists(config_path):
+		print("\nCreating default AWS config...")
+		create_default_config()
+		print("Done.\n")
+
+	aws_data = load_json(config_path)
+	method = aws_data['method']
+	service = aws_data['service']
+	host = aws_data['host']
+	aws_region = aws_data['region']
+	aws_endpoint = aws_data['endpoint']
+
+	request_parameters = ''
 
 	# Create a date for headers and the credential string
 	time = datetime.datetime.utcnow()
