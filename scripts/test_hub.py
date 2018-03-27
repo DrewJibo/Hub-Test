@@ -49,11 +49,24 @@ def get_signature_key(key, date_stamp, region_name, service_name):
 	Combines the AWS elements to build a cononical request
 """
 def build_req(elements):
-	req = ''
-	for elem in elements:
-		req += '{}\n'.format(elem)
-
+	
 	return req
+
+
+"""
+	Builds the canonical request for AWS
+"""
+def create_canonical_request(method, request_parameters):
+	# AWS elements
+	uri = '/'														# create canonical URI (from domain to query), use '/' if no path
+	query = request_parameters										# must be sorted by name
+	headers = 'host:{}\nx-amz-date:{}\n'.format(host, amz_date)		# must be trimmed, lowercase, sorted in code point (low to high)
+	signed_headers = 'host;x-amz-date'								# lists headers in canonical_headers list, delimited with ; in alpha order
+	payload_hash = hashlib.sha256('').hexdigest()					# hash of the request body content, GET payload is empty string
+	
+	# combine elements to make canonical request
+	request = '{}\n{}\n{}\n{}\n{}\n{}'.format(method, uri, query, headers, signed_headers, payload_hash)
+	return request
 
 
 """
@@ -99,14 +112,17 @@ def create_token():
 	amz_date = time.strftime('%Y%m%d%dT%H%M%SZ')	# date with time
 	date_stamp = time.strftime('%Y%m%d')			# date w/o time, used in credential scope
 
-	aws_elements = list()
-	canonical_uri = '/'														# create canonical URI (from domain to query), use '/' if no path
-	canonical_query = request_parameters									# must be sorted by name
-	canonical_headers = 'host:{}\nx-amz-date:{}\n'.format(host, amz_date)	# must be trimmed, lowercase, sorted in code point (low to high)
-	signed_headers = 'host;x-amz-date'										# lists headers in canonical_headers list, delimited with ; in alpha order
-	payload_hash = hashlib.sha256('').hexdigest()							# hash of the request body content, GET payload is empty string
 
-	canonical_request = build_req(aws_elements)								# combine elements to make cononical request
+	###########################
+	#    Canonical Request    #
+	###########################
+
+	canonical_request = create_canonical_request(method, request_parameters)
+
+	
+	
+
+
 
 if __name__ == "__main__":
 	create_token()
