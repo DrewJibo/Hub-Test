@@ -1,3 +1,4 @@
 venv/*
 .DS_Store
 config/credentials.json
+config/aws_config.json
