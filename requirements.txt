@@ -1,1 +1,3 @@
 paramiko
+requests
+boto3
