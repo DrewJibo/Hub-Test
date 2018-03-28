@@ -1,50 +1,7 @@
-import paramiko
-import json
-import requests
-import boto3
 import os, sys
+import requests
 import base64, datetime, hashlib, hmac
-
-
-"""
-	Copies the credentials.json file locally from robot
-"""
-def copy_credentials_file(hostname, username, password, src_path, dst_path):
-	# create ssh connection
-	ssh_client = paramiko.SSHClient()
-	ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-	ssh_client.connect(hostname=hostname, username=username, password=password)
-
-	# ftp file from robot to local path
-	ftp_client = ssh_client.open_sftp()
-	ftp_client.get(src_path, dst_path)
-	ftp_client.close()
-
-
-"""
-	Creates a default config file for AWS
-	(aws_config.json)
-"""
-def create_default_config(path):
-	data = {}
-	data['method'] = 'GET'
-	data['service'] = 'ec2'
-	data['host'] = 'ec2.amazonaws.com'
-	data['region'] = 'us-east-1'
-	data['endpoint'] = 'https://ec2.amazonaws.com'
-
-	with open(path, 'w+') as file:
-		json.dump(data, file)
-
-
-
-"""
-	Reads and returns contents of JSON file
-"""
-def load_json(path):
-	with open(path, 'r') as file:
-		data = json.load(file)
-	return data
+from TestUtils.utils import *
 
 
 """
@@ -64,20 +21,26 @@ def get_signature_key(key, date_stamp, region_name, service_name):
 
 
 """
-	Manually signs the request
+	Sends a manually signed request using the AccessKeyId and SecretKey
+	to the AWS service.
 """
-def manual_signature(access_key, secret_key):
+def send_request(access_key, secret_key):
+	cred_path = check_credentials()
+
+	# Get credentials for AWS token
+	credentials = load_json(dst_path)
+	access_key = credentials['accessKeyId']
+	secret_key = credentials['secretAccessKey']
+
+	if access_key is None or secret_key is None:
+		print("\nNo access key is available.\n")
+		sys.exit()
 
 	##########################
 	#    AWS REQUEST INFO    #
 	##########################
 
-	config_path = os.path.expanduser('~/jibo/Hub-Test/config/aws_config.json')
-
-	if not os.path.exists(config_path):
-		print("\nCreating default AWS config...")
-		create_default_config(config_path)
-		print("Done.\n")
+	config_path = check_aws_config()
 
 	aws_data = load_json(config_path)
 	method = aws_data['method']
@@ -85,7 +48,6 @@ def manual_signature(access_key, secret_key):
 	host = aws_data['host']
 	aws_region = aws_data['region']
 	aws_endpoint = aws_data['endpoint']
-
 	request_parameters = ''
 
 	# Create a date for headers and the credential string
@@ -149,53 +111,5 @@ def manual_signature(access_key, secret_key):
 	print(response.text)
 
 
-"""
-	Makes a request using the AWS SDK (boto3),
-	signature created automatically.
-"""
-def boto_request(access_key, secret_key):
-	return
-
-
-def main():
-
-	####################
-	#    LOGIN DATA    #
-	####################
-
-	login_file = os.path.expanduser('~/jibo/Hub-Test/config/login.json')
-	login_data = load_json(login_file)
-
-	username = login_data['username']
-	password = login_data['password']
-	robot_name = login_data['robot_name']
-
-
-	##############################
-	#    GENERATE CREDENTIALS    #
-	##############################
-
-	src_path = '/var/jibo/credentials.json'
-	dst_path = os.path.expanduser('~/jibo/Hub-Test/config/credentials.json')
-
-	if not os.path.exists(dst_path):
-		print("\nGrabbing AWS credentials from robot...")
-		copy_credentials_file(robot_name, username, password, src_path, dst_path)
-		print("Done.\n")
-
-	# Get credentials for AWS token
-	credentials = load_json(dst_path)
-	region = credentials['region']
-	endpoint = 'https://{}.jibo.com'.format(region)
-	access_key = credentials['accessKeyId']
-	secret_key = credentials['secretAccessKey']
-
-	if access_key is None or secret_key is None:
-		print("\nNo access key is available.\n")
-		sys.exit()
-
-	create_default_config(os.path.expanduser('~/jibo/Hub-Test/config/aws_config.json'))
-
-
 if __name__ == "__main__":
-	main()
+	send_request()
