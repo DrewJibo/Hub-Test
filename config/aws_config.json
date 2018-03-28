@@ -3,5 +3,5 @@
 	"service": "ec2",
 	"host": "ec2.amazonaws.com",
 	"region": "us-east-1",
-	"endpoint": "https://ec2.amazonaws.com",
+	"endpoint": "https://ec2.amazonaws.com"
 }

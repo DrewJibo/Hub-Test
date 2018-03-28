@@ -1,5 +1,7 @@
 import os, sys
 import boto3
+
+sys.path.append('./')
 from TestUtils.utils import *
 
 """
@@ -9,8 +11,7 @@ def boto_request(access_key, secret_key):
 	config_path = check_aws_config()
 	aws_data = load_json(config_path)
 	region = aws_data['region']
-
-	s3 = boto3.resource('s3')
+	s3 = boto3.resource('s3', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
 	for bucket in s3.buckets.all():
 		print(bucket.name)
 
@@ -23,7 +24,7 @@ def send_request():
 	cred_path = check_credentials()
 
 	# Get credentials for AWS token
-	credentials = load_json(dst_path)
+	credentials = load_json(cred_path)
 	access_key = credentials['accessKeyId']
 	secret_key = credentials['secretAccessKey']
 
