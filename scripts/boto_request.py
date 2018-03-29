@@ -4,16 +4,25 @@ import boto3
 sys.path.append('./')
 from TestUtils.utils import *
 
+
 """
+	Create connection to AWS/ec2 services
 """
-def boto_request(access_key, secret_key):
-		
-	config_path = check_aws_config()
-	aws_data = load_json(config_path)
-	region = aws_data['region']
-	s3 = boto3.resource('s3', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
-	for bucket in s3.buckets.all():
-		print(bucket.name)
+def connect():
+	# Get credentials for AWS
+	cred_path = check_credentials()
+	credentials = load_json(cred_path)
+	access_key = credentials['accessKeyId']
+	secret_key = credentials['secretAccessKey']
+	region = credentials['region']
+
+	if access_key is None or secret_key is None:
+		print("\nNo access key is available.\n")
+		sys.exit()
+
+	# connect to aws
+	conn = boto3.resource('ec2', region_name=region, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+	return conn
 
 
 """
@@ -21,19 +30,8 @@ def boto_request(access_key, secret_key):
 	This does not require a signature, it is automatically signed.
 """
 def send_request():
-	cred_path = check_credentials()
-
-	# Get credentials for AWS token
-	credentials = load_json(cred_path)
-	access_key = credentials['accessKeyId']
-	secret_key = credentials['secretAccessKey']
-
-	if access_key is None or secret_key is None:
-		print("\nNo access key is available.\n")
-		sys.exit()
-
-	boto_request(access_key, secret_key)
-
+	conn = connect()
+	
 
 if __name__ == "__main__":
 	send_request()
