@@ -1,6 +1,8 @@
 import os, sys
 import requests
 import base64, datetime, hashlib, hmac
+
+sys.path.append('./')
 from TestUtils.utils import *
 
 
@@ -24,11 +26,11 @@ def get_signature_key(key, date_stamp, region_name, service_name):
 	Sends a manually signed request using the AccessKeyId and SecretKey
 	to the AWS service.
 """
-def send_request(access_key, secret_key):
-	cred_path = check_credentials()
+def send_request():
 
 	# Get credentials for AWS token
-	credentials = load_json(dst_path)
+	cred_path = check_credentials()
+	credentials = load_json(cred_path)
 	access_key = credentials['accessKeyId']
 	secret_key = credentials['secretAccessKey']
 

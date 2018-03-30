@@ -25,9 +25,9 @@ def create_default_config(path):
 	data = {}
 	data['method'] = 'GET'
 	data['service'] = 'ec2'
-	data['host'] = 'ec2.amazonaws.com'
-	data['region'] = 'us-east-1'
-	data['endpoint'] = 'https://ec2.amazonaws.com'
+	data['host'] = 'devgreen-hub.jibo.com'
+	data['region'] = 'stg-entrypoint'
+	data['endpoint'] = 'http://ec2.devgreen-hub.com'
 
 	with open(path, 'w+') as file:
 		json.dump(data, file)
