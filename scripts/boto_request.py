@@ -8,8 +8,9 @@ from TestUtils.utils import *
 
 
 """
+	Tries to make a signed request to Elastic Search
 """
-def main():
+def es_request():
 	cred_path = check_credentials()
 	cred_json = load_json(cred_path)
 	ACCESS_KEY = cred_json['accessKeyId']
@@ -45,6 +46,10 @@ def main():
 	)
 
 	print(es.info())
+
+
+def main():
+	es_request()
 
 
 if __name__ == "__main__":
