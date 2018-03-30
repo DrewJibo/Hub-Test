@@ -1,37 +1,51 @@
 import os, sys
 import boto3
+from aws_requests_auth.aws_auth import AWSRequestsAuth
+from elasticsearch import Elasticsearch, RequestsHttpConnection
 
 sys.path.append('./')
 from TestUtils.utils import *
 
 
 """
-	Create connection to AWS/ec2 services
 """
-def connect():
-	# Get credentials for AWS
+def main():
 	cred_path = check_credentials()
-	credentials = load_json(cred_path)
-	access_key = credentials['accessKeyId']
-	secret_key = credentials['secretAccessKey']
-	region = credentials['region']
+	cred_json = load_json(cred_path)
+	ACCESS_KEY = cred_json['accessKeyId']
+	SECRET_KEY = cred_json['secretAccessKey']
+	REGION = 'us-east-1'
+	SERVICE = 'es'
+	DOMAIN = 'stg-entrypoint'
 
-	if access_key is None or secret_key is None:
-		print("\nNo access key is available.\n")
+	if ACCESS_KEY is None or SECRET_KEY is None:
+		print("\nCredentials are invalid.\n")
 		sys.exit()
 
-	# connect to aws
-	conn = boto3.resource('ec2', region_name=region, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
-	return conn
+	session = boto3.Session(aws_access_key_id=ACCESS_KEY, aws_secret_access_key=SECRET_KEY, region_name=REGION)
+	credentials = session.get_credentials()
 
+	es_host = '{}.{}.{}.amazonaws.com'.format(DOMAIN, REGION, SERVICE)
+	aws_auth = AWSRequestsAuth(
+		aws_access_key=credentials.access_key,
+		aws_secret_access_key=credentials.secret_key,
+		aws_token=credentials.token,
+		aws_host=es_host,
+		aws_region=session.region_name,
+		aws_service=SERVICE
+	)
 
-"""
-	Makes a request using the AWS SDK (boto3).
-	This does not require a signature, it is automatically signed.
-"""
-def send_request():
-	conn = connect()
-	
+	# use the requests connection_class and pass in the custom auth class
+	es = Elasticsearch(
+		hosts=[{'host': es_host, 'port': 443}],
+		http_auth=aws_auth,
+		use_ssl=True,
+		verify_certs=True,
+		connection_class=RequestsHttpConnection
+	)
+
+	print(es.info())
+
 
 if __name__ == "__main__":
-	send_request()
+	main()
