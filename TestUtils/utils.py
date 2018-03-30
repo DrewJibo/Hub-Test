@@ -39,7 +39,7 @@ def create_default_config(path):
 	if not found.
 """
 def check_aws_config():
-	config_path = os.path.expanduser('~/jibo/Hub-Test/config/aws_config.json')
+	config_path = os.path.expanduser('~/jibo/HubTest/config/aws_config.json')
 
 	if not os.path.exists(config_path):
 		print("\nCreating default AWS config...")
@@ -55,7 +55,7 @@ def check_aws_config():
 	robot if not found.
 """
 def check_credentials():
-	login_file = os.path.expanduser('~/jibo/Hub-Test/config/login.json')
+	login_file = os.path.expanduser('~/jibo/HubTest/config/login.json')
 	login_data = load_json(login_file)
 
 	robot_name = login_data['robot_name']
@@ -63,7 +63,7 @@ def check_credentials():
 	password = login_data['password']
 	
 	src_path = '/var/jibo/credentials.json'
-	dst_path = os.path.expanduser('~/jibo/Hub-Test/config/credentials.json')
+	dst_path = os.path.expanduser('~/jibo/HubTest/config/credentials.json')
 
 	if not os.path.exists(dst_path):
 		print("\nGrabbing AWS credentials from robot...")
