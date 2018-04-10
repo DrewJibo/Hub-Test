@@ -64,7 +64,7 @@ def ec2_request(ACCESS_KEY, SECRET_KEY, REGION):
 	print(response)
 
 
-def main():
+def send_request():
 	# get credentials
 	cred_path = check_credentials()
 	cred_json = load_json(cred_path)
@@ -83,4 +83,4 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
+	send_request()
