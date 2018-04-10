@@ -28,7 +28,7 @@ def send_request(access_key, secret_key):
 	cred_path = check_credentials()
 
 	# Get credentials for AWS token
-	credentials = load_json(dst_path)
+	credentials = load_json(cred_path)
 	access_key = credentials['accessKeyId']
 	secret_key = credentials['secretAccessKey']
 
@@ -48,7 +48,7 @@ def send_request(access_key, secret_key):
 	host = aws_data['host']
 	aws_region = aws_data['region']
 	aws_endpoint = aws_data['endpoint']
-	request_parameters = ''
+	request_parameters = 'Action=DescribeRegions&Version=2013-10-15'
 
 	# Create a date for headers and the credential string
 	time = datetime.datetime.utcnow()
